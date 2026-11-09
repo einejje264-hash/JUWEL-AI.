@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101323">
+  <title>JUWEL AI</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #151c30;
+      --panel2: #1c2740;
+      --text: #f4f6ff;
+      --muted: #aab4cc;
+      --accent: #8b7cff;
+      --accent2: #35c9d0;
+      --border: rgba(255,255,255,.12);
+      --danger: #ff8585;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: radial-gradient(circle at top, #202044, var(--bg) 55%);
+      color: var(--text); font-family: system-ui, "Noto Sans Bengali", sans-serif;
+    }
+    .app { max-width: 760px; margin: auto; min-height: 100vh; display: flex; flex-direction: column; }
+    header { padding: 18px 16px; border-bottom: 1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .brand { font-size: 22px; font-weight: 800; letter-spacing: .5px; }
+    .creator { color: var(--muted); font-size: 12px; text-align:right; }
+    main { flex:1; padding: 16px; display:flex; flex-direction:column; gap:14px; }
+    .intro, .settings, .chat-wrap { background: rgba(21,28,48,.92); border:1px solid var(--border); border-radius:18px; }
+    .intro { padding:18px; text-align:center; }
+    .orb { width:76px; height:76px; border-radius:50%; margin:0 auto 10px; display:grid; place-items:center; font-size:32px; background:linear-gradient(135deg,var(--accent),var(--accent2)); box-shadow:0 0 28px rgba(139,124,255,.35); }
+    h1 { font-size:20px; margin:6px 0; }
+    p { color:var(--muted); margin:6px 0; line-height:1.55; }
+    .chat-wrap { padding:12px; display:flex; flex-direction:column; min-height:260px; }
+    .messages { display:flex; flex-direction:column; gap:10px; min-height:190px; max-height:48vh; overflow:auto; padding:4px; }
+    .msg { padding:11px 13px; border-radius:14px; max-width:92%; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.5; }
+    .user { align-self:flex-end; background:#393568; }
+    .ai { align-self:flex-start; background:var(--panel2); }
+    .status { min-height:20px; font-size:12px; color:var(--muted); padding:6px 4px; }
+    .composer { display:flex; gap:8px; margin-top:8px; }
+    input, button { font:inherit; }
+    input[type="text"], input[type="password"] { width:100%; min-width:0; padding:12px; border-radius:12px; color:var(--text); background:#0e1528; border:1px solid var(--border); outline:none; }
+    input:focus { border-color:var(--accent); }
+    button, .app-link { border:0; border-radius:12px; padding:11px 14px; color:white; background:linear-gradient(135deg,var(--accent),#6555cf); cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    .secondary { background:#29334c; border:1px solid var(--border); }
+    .mic { background:linear-gradient(135deg,#12aeb6,#2777d8); white-space:nowrap; }
+    .toolbar, .quick-links { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .toolbar button, .quick-links a { flex:1; }
+    .settings { padding:15px; }
+    .settings h2 { font-size:16px; margin:0 0 8px; }
+    .settings small { color:var(--muted); display:block; line-height:1.5; margin-top:8px; }
+    .key-row { display:flex; gap:8px; }
+    .key-row input { flex:1; }
+    .warning { color:#ffd28b !important; }
+    footer { padding:12px 16px 20px; color:var(--muted); text-align:center; font-size:11px; }
+    @media (max-width:480px) {
+      header { padding:14px 12px; }
+      main { padding:12px; }
+      .composer { flex-wrap:wrap; }
+      .composer input { flex:1 1 100%; }
+      .composer button { flex:1; }
+      .key-row { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">✦ JUWEL AI</div>
+    <div class="creator">Created by<br><strong>Md Juwel</strong></div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div class="orb">✦</div>
+      <h1>আপনার AI সহকারী</h1>
+      <p>লিখে বা মাইক্রোফোনে কথা বলে প্রশ্ন করুন।</p>
+      <div class="quick-links">
+        <a class="app-link" href="https://www.youtube.com/" target="_blank" rel="noopener">YouTube খুলুন</a>
+        <a class="app-link" href="https://www.facebook.com/" target="_blank" rel="noopener">Facebook খুলুন</a>
+      </div>
+    </section>
+
+    <section class="chat-wrap">
+      <div id="messages" class="messages" aria-live="polite">
+        <div class="msg ai">হ্যালো! আমি JUWEL AI। কীভাবে সাহায্য করতে পারি?</div>
+      </div>
+      <div id="status" class="status">প্রস্তুত।</div>
+      <div class="composer">
+        <input id="prompt" type="text" placeholder="এখানে আপনার প্রশ্ন লিখুন..." autocomplete="off">
+        <button id="sendBtn" type="button">পাঠান</button>
+        <button id="micBtn" class="mic" type="button">🎙️ বলুন</button>
+      </div>
+      <div class="toolbar">
+        <button id="speakBtn" class="secondary" type="button">🔊 শেষ উত্তর শুনুন</button>
+        <button id="stopBtn" class="secondary" type="button">■ কথা বন্ধ</button>
+        <button id="clearBtn" class="secondary" type="button">চ্যাট মুছুন</button>
+      </div>
+    </section>
+
+    <section class="settings">
+      <h2>Gemini API সংযোগ</h2>
+      <div class="key-row">
+        <input id="apiKey" type="password" placeholder="Gemini API Key এখানে দিন" autocomplete="off">
+        <button id="saveKeyBtn" type="button">এই সেশনে রাখুন</button>
+      </div>
+      <small class="warning">নিরাপত্তা: এই ওয়েব সংস্করণে API Key ব্রাউজার থেকে সরাসরি ব্যবহৃত হয়। পাবলিকভাবে শেয়ার করা সাইটে এটি নিরাপদ নয়। কাউকে আপনার API Key দেবেন না। স্থায়ী ও নিরাপদ ব্যবহারের জন্য সার্ভার/ব্যাকএন্ড প্রয়োজন।</small>
+      <small>API Key এই পেজের বর্তমান সেশনে রাখা হবে; পেজ বন্ধ করলে আবার দিতে হতে পারে।</small>
+    </section>
+  </main>
+
+  <footer>JUWEL AI • বাংলা ভয়েস ও টেক্সট সহকারী</footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const MODEL = "gemini-2.5-flash";
+  const messagesEl = document.getElementById("messages");
+  const promptEl = document.getElementById("prompt");
+  const statusEl = document.getElementById("status");
+  const apiKeyEl = document.getElementById("apiKey");
+  const sendBtn = document.getElementById("sendBtn");
+  const micBtn = document.getElementById("micBtn");
+  let apiKey = "";
+  let lastAnswer = "";
+  let recognition = null;
+  let busy = false;
+
+  function setStatus(message) {
+    statusEl.textContent = message;
+  }
+
+  function addMessage(text, who) {
+    const node = document.createElement("div");
+    node.className = "msg " + (who === "user" ? "user" : "ai");
+    node.textContent = text;
+    messagesEl.appendChild(node);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return node;
+  }
+
+  function speak(text) {
+    if (!("speechSynthesis" in window) || !text) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "bn-BD";
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function explainApiError(data, response) {
+    if (data && data.error && data.error.message) {
+      return "Gemini API Error (" + response.status + "): " + data.error.message;
+    }
+    if (response.status === 401 || response.status === 403) {
+      return "API Key গ্রহণ করা হয়নি বা অনুমতি নেই। AI Studio থেকে Key এবং API সেটিংস যাচাই করুন।";
+    }
+    if (response.status === 429) {
+      return "অনুরোধের সীমা বা কোটা শেষ হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।";
+    }
+    return "সার্ভার থেকে সঠিক উত্তর পাওয়া যায়নি (HTTP " + response.status + ")।";
+  }
+
+  async function askGemini(question) {
+    if (!apiKey) {
+      addMessage("আগে Gemini API Key দিন এবং “এই সেশনে রাখুন” চাপুন।", "ai");
+      setStatus("API Key প্রয়োজন।");
+      return;
+    }
+    if (busy) return;
+    busy = true;
+    sendBtn.disabled = true;
+    micBtn.disabled = true;
+    setStatus("উত্তর তৈরি হচ্ছে...");
+
+    try {
+      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" +
+        MODEL + ":generateContent?key=" + encodeURIComponent(apiKey);
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: "You are JUWEL AI, a helpful and respectful assistant created by Md Juwel. Reply in clear, simple Bengali unless the user asks for another language. Be accurate, concise, and honest. Do not claim to perform actions you cannot perform." }]
+          },
+          contents: [{ role: "user", parts: [{ text: question }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 700 }
+        })
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (_) {
+        throw new Error("সার্ভারের উত্তর পড়া যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করুন।");
+      }
+
+      if (!response.ok) {
+        throw new Error(explainApiError(data, response));
+      }
+
+      const parts = data && data.candidates && data.candidates[0] &&
+        data.candidates[0].content && data.candidates[0].content.parts;
+      const answer = Array.isArray(parts)
+        ? parts.map(part => part.text || "").join("").trim()
+        : "";
+
+      if (!answer) {
+        const reason = data && data.promptFeedback && data.promptFeedback.blockReason;
+        throw new Error(reason ? "এই অনুরোধটি ব্লক হয়েছে: " + reason : "AI থেকে খালি উত্তর এসেছে। আবার চেষ্টা করুন।");
+      }
+
+      lastAnswer = answer;
+      addMessage(answer, "ai");
+      setStatus("উত্তর পাওয়া গেছে।");
+      speak(answer);
+    } catch (error) {
+      const message = error && error.message ? error.message : "অজানা সমস্যা হয়েছে।";
+      addMessage("সমস্যা: " + message, "ai");
+      setStatus("অনুরোধ সম্পন্ন হয়নি।");
+      console.error(error);
+    } finally {
+      busy = false;
+      sendBtn.disabled = false;
+      micBtn.disabled = false;
+      promptEl.focus();
+    }
+  }
+
+  function sendPrompt() {
+    const question = promptEl.value.trim();
+    if (!question || busy) return;
+    addMessage(question, "user");
+    promptEl.value = "";
+    askGemini(question);
+  }
+
+  sendBtn.addEventListener("click", sendPrompt);
+  promptEl.addEventListener("keydown", event => {
+    if (event.key === "Enter") sendPrompt();
+  });
+
+  document.getElementById("saveKeyBtn").addEventListener("click", () => {
+    const value = apiKeyEl.value.trim();
+    if (!value) {
+      setStatus("আগে API Key লিখুন।");
+      return;
+    }
+    apiKey = value;
+    apiKeyEl.value = "";
+    setStatus("API Key এই পেজের বর্তমান সেশনে রাখা হয়েছে।");
+  });
+
+  document.getElementById("speakBtn").addEventListener("click", () => {
+    if (lastAnswer) speak(lastAnswer);
+    else setStatus("এখনো শোনানোর মতো কোনো উত্তর নেই।");
+  });
+
+  document.getElementById("stopBtn").addEventListener("click", () => {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (recognition) {
+      try { recognition.stop(); } catch (_) {}
+    }
+    setStatus("ভয়েস বন্ধ করা হয়েছে।");
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    messagesEl.replaceChildren();
+    lastAnswer = "";
+    addMessage("চ্যাট পরিষ্কার করা হয়েছে। নতুন প্রশ্ন করতে পারেন।", "ai");
+    setStatus("চ্যাট মুছে ফেলা হয়েছে।");
+  });
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = "bn-BD";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    micBtn.addEventListener("click", () => {
+      try {
+        recognition.start();
+        setStatus("শুনছি... কথা বলুন।");
+      } catch (_) {
+        setStatus("মাইক্রোফোন চালু করা যাচ্ছে না। কিছুক্ষণ পরে আবার চাপুন।");
+      }
+    });
+
+    recognition.onresult = event => {
+      const spokenText = event.results && event.results[0] && event.results[0][0]
+        ? event.results[0][0].transcript.trim() : "";
+      if (spokenText) {
+        promptEl.value = spokenText;
+        sendPrompt();
+      } else {
+        setStatus("কথা বোঝা যায়নি। আবার চেষ্টা করুন।");
+      }
+    };
+    recognition.onerror = event => {
+      setStatus("মাইক্রোফোন সমস্যা: " + (event.error || "অনুমতি বা নেটওয়ার্ক পরীক্ষা করুন।"));
+    };
+    recognition.onend = () => {
+      if (!busy) setStatus("প্রস্তুত।");
+    };
+  } else {
+    micBtn.disabled = true;
+    micBtn.title = "এই ব্রাউজারে ভয়েস ইনপুট সমর্থিত নয়। Chrome-এ চেষ্টা করুন।";
+    setStatus("এই ব্রাউজারে ভয়েস ইনপুট নেই। Chrome ব্যবহার করুন।");
+  }
+})();
+</script>
+</body>
+</html>
